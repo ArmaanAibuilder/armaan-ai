@@ -81,8 +81,7 @@ if prompt and prompt.strip():
         with st.spinner("Armaan AI is thinking..."):
             try:
                 memories = [m["content"] for m in storage.list_memories()]
-                reply = get_reply(api_messages, memories)
-            except Exception as exc:
+                reply = get_reply(api_messages)
                 reply = ("I couldn't reach Ollama. Make sure the Ollama app is open and "
                          f"the `{MODEL}` model is installed.\n\nTechnical detail: `{exc}`")
             st.markdown(reply)
