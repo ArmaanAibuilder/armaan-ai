@@ -1,4 +1,3 @@
-```python
 import streamlit as st
 import storage
 from ai_core import get_reply, MODEL
@@ -6,41 +5,43 @@ from ai_core import get_reply, MODEL
 st.set_page_config(
     page_title="Armaan AI",
     page_icon="🤖",
-    layout="wide"
+    layout="wide",
 )
 
-st.markdown("""
-<style>
-.block-container {
-    max-width: 1050px;
-    padding-top: 1.6rem;
-}
-[data-testid="stSidebar"] {
-    border-right: 1px solid rgba(128,128,128,.25);
-}
-.chat-title {
-    font-size: 2rem;
-    font-weight: 750;
-    margin-bottom: .2rem;
-}
-.subtle {
-    opacity: .72;
-    font-size: .9rem;
-}
-</style>
-""", unsafe_allow_html=True)
+st.markdown(
+    """
+    <style>
+    .block-container {
+        max-width: 1050px;
+        padding-top: 1.6rem;
+    }
+    [data-testid="stSidebar"] {
+        border-right: 1px solid rgba(128,128,128,.25);
+    }
+    .chat-title {
+        font-size: 2rem;
+        font-weight: 750;
+        margin-bottom: .2rem;
+    }
+    .subtle {
+        opacity: .72;
+        font-size: .9rem;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
-
-# Initialize the current conversation
+# Initialize conversation
 if "chat_id" not in st.session_state:
     chats = storage.list_conversations()
     st.session_state.chat_id = (
-        chats[0]["id"] if chats
+        chats[0]["id"]
+        if chats
         else storage.create_conversation()
     )
 
 
-# Start a new conversation
 def start_new_chat():
     st.session_state.chat_id = storage.create_conversation()
 
@@ -71,7 +72,7 @@ with st.sidebar:
                 "primary"
                 if chat["id"] == st.session_state.chat_id
                 else "secondary"
-            )
+            ),
         ):
             st.session_state.chat_id = chat["id"]
             st.rerun()
@@ -80,13 +81,13 @@ with st.sidebar:
     st.subheader("🧠 Saved memory")
     st.caption(
         "Add facts Armaan AI should remember across chats. "
-        "Don't save secrets."
+        "Don't save passwords or other secrets."
     )
 
     with st.form("add_memory_form", clear_on_submit=True):
         memory_text = st.text_input(
             "Remember this",
-            placeholder="I am learning Python."
+            placeholder="I am learning Python.",
         )
 
         if st.form_submit_button("Save memory"):
@@ -105,42 +106,39 @@ with st.sidebar:
     st.divider()
     st.caption(f"Model: {MODEL}")
     st.caption(
-        "Conversation storage depends on the environment "
-        "where Armaan AI is running."
+        "Chat and memory persistence depends on the hosting environment."
     )
 
     with st.expander("Delete current chat"):
-        st.warning(
-            "This permanently deletes this chat and its messages."
-        )
+        st.warning("This permanently deletes this chat and its messages.")
 
         if st.button(
             "Delete chat",
             key="delete_current",
-            use_container_width=True
+            use_container_width=True,
         ):
             storage.delete_conversation(st.session_state.chat_id)
 
             chats = storage.list_conversations()
             st.session_state.chat_id = (
-                chats[0]["id"] if chats
+                chats[0]["id"]
+                if chats
                 else storage.create_conversation()
             )
-
             st.rerun()
 
 
-# Main chat interface
+# Main page
 st.markdown(
     '<div class="chat-title">Armaan AI</div>',
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )
 
 st.markdown(
     '<div class="subtle">'
     'Ask questions, build projects, or get help with code.'
     '</div>',
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )
 
 st.write("")
@@ -148,13 +146,13 @@ st.write("")
 chat_id = st.session_state.chat_id
 messages = storage.get_messages(chat_id)
 
-# Display conversation history
+# Display previous messages
 for msg in messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
 
-# Handle a new message
+# Accept a new message
 prompt = st.chat_input("Message Armaan AI...")
 
 if prompt and prompt.strip():
@@ -163,11 +161,10 @@ if prompt and prompt.strip():
     storage.add_message(chat_id, "user", prompt)
 
     history = storage.get_messages(chat_id)
-
     api_messages = [
-        {"role": m["role"], "content": m["content"]}
-        for m in history
-        if m["role"] in ("user", "assistant")
+        {"role": msg["role"], "content": msg["content"]}
+        for msg in history
+        if msg["role"] in ("user", "assistant")
     ]
 
     with st.chat_message("user"):
@@ -179,13 +176,15 @@ if prompt and prompt.strip():
                 reply = get_reply(api_messages)
 
                 if not isinstance(reply, str) or not reply.strip():
-                    reply = "I received an empty response. Please try again."
+                    reply = (
+                        "The AI returned an empty response. "
+                        "Please try again."
+                    )
 
             except Exception as exc:
                 reply = (
-                    "I couldn't connect to the AI model.\n\n"
-                    "Please check that the AI service is running "
-                    "and the model is available.\n\n"
+                    "I couldn't connect to the AI model. "
+                    "Please check the AI service configuration.\n\n"
                     f"Technical detail: `{exc}`"
                 )
 
@@ -193,4 +192,3 @@ if prompt and prompt.strip():
 
     storage.add_message(chat_id, "assistant", reply)
     st.rerun()
-```
